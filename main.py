@@ -4,19 +4,19 @@ import time
 maxHeight = 10
 minHeight = -10
 width = 100
-padding = 100
+padding = 30
 speed = 20
+grav = -8
+jumpHeight = 8
+termVel = -4
 debug = False
-FPS = 50
+FPS = 30
 
 
 
-lastFrameTime = 0
-points = [(0.0,0.0), (10.0, 10,0)]
-pad = ""
-for j in range(padding):
-    pad += "\n"
-
+ySpeed = 0
+lastFrameTime = time.time()
+points = [(5.0,0.0)]
 
 def render(pl):
     finalString = ""
@@ -34,9 +34,11 @@ def render(pl):
             curLine += curChar
         finalString += (curLine + "\n")
     if debug:
-        print(pad+finalString+str(points[0]))
+        print("\r" + (('\n'*padding)+finalString + str(points[0])), end="")
     else:
-        print(pad + finalString)
+        # https://stackoverflow.com/questions/465348/how-can-i-overwrite-print-over-the-current-line-in-windows-command-line
+        print("\r" + (('\n'*padding)+finalString), end="")
+
 
 def AddTuple(t, x, y):
     #tuple is imutable so we have to convert it into a list first
@@ -44,18 +46,23 @@ def AddTuple(t, x, y):
     t[0] += x
     t[1] += y
     return tuple(t)
-
+def SetTuple(t, x, y):
+    t = list(t)
+    t[0] = x
+    t[1] = y
+    return tuple(t)
 
 def main(deltatime):
-    if k.is_pressed('w'):
-        points[0] = AddTuple(points[0], 0, speed*deltatime)
-    if k.is_pressed('s'):
-        points[0] = AddTuple(points[0], 0, -speed*deltatime)
-    if k.is_pressed('a'):
-        points[0] = AddTuple(points[0], -speed*deltatime, 0)
-    if k.is_pressed('d'):
-        points[0] = AddTuple(points[0], speed*deltatime, 0)
+    global ySpeed
 
+    points[0] = AddTuple(points[0], 0, 0.5 * ySpeed * deltatime)
+
+    if k.is_pressed('space'):
+        ySpeed = jumpHeight
+
+    ySpeed += grav * deltatime
+
+    points[0] = AddTuple(points[0], 0, 0.5 * ySpeed * deltatime)
     render(points)
 
 
@@ -65,7 +72,7 @@ while True:
     dt = currentTime - lastFrameTime
 
     #limits fps
-    if FPS > 0:
+    if FPS != 0:
         sleepTime = 1. / FPS - (currentTime - lastFrameTime)
         if sleepTime > 0:
             time.sleep(sleepTime)
